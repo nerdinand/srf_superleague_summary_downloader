@@ -23,13 +23,24 @@ def fetch_summary_ids(year, round)
 
   info "Fetching #{round_html}..."
   uri = URI.parse(round_html_url)
-  html = Net::HTTP.get(uri)
+  swisstxt_html = Net::HTTP.get(uri)
 
-  match_data = html.scan(VIDEOEMBED_HREF_REGEX)
-  match_data.map(&:first)
+  swisstxt_document = Ox.load(swisstxt_html)
+  link_elements = swisstxt_document.locate('table/tbody/tr/td/a')
+
+  texts = link_elements.map(&:text)
+  hrefs = link_elements.map(&:href)
+
+  nil_indices = texts.map.with_index { |text, i| i if text == nil }.compact
+
+  scores = texts.compact
+  video_hrefs = hrefs.values_at(*nil_indices)
+  ids = video_hrefs.map { |href| href.match VIDEOEMBED_HREF_REGEX }.map{ |match| match[1] }
+
+  [ids, scores]
 end
 
-def fetch_summary_meta_information(summary_id)
+def fetch_summary_meta_information(summary_id, score)
   integrationlayer_xml_url = "#{INTEGRATIONLAYER_BASE_URL}/#{summary_id}.xml"
   info "Fetching #{integrationlayer_xml_url}"
 
@@ -43,7 +54,7 @@ def fetch_summary_meta_information(summary_id)
   duration = integrationlayer_document.locate('Video/duration').first.text.to_i / 1000.0
 
   {
-    title: title,
+    title: "#{title} #{score}",
     asset_id: asset_id,
     mark_in: mark_in,
     duration: duration
@@ -80,15 +91,15 @@ def reencode_asset_to_summary(meta_info, round_directory)
 end
 
 def download_summaries(year, round)
-  summary_ids = fetch_summary_ids(year, round)
+  summary_ids, scores = fetch_summary_ids(year, round)
   info "Found summary ids: #{summary_ids.inspect}"
 
   round_directory = File.join('data', year.to_s, round.to_s)
   FileUtils.mkdir_p(round_directory) unless File.exist?(round_directory)
 
   meta_infos = {}
-  summary_ids.each do |summary_id|
-    meta_infos[summary_id] = fetch_summary_meta_information(summary_id)
+  summary_ids.each_with_index do |summary_id, i|
+    meta_infos[summary_id] = fetch_summary_meta_information(summary_id, scores[i])
   end
 
   asset_ids = meta_infos.map { |k, v| v[:asset_id] }
