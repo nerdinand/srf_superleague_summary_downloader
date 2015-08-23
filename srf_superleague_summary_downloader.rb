@@ -7,7 +7,7 @@ require 'active_support'
 require 'active_support/core_ext/string/inflections'
 
 ROUND_MIN = 160
-VIDEOEMBED_HREF_REGEX = %r{http://www.srf.ch/player/tv/videoembed\?id=(.*?)&}
+VIDEOEMBED_HREF_REGEX = %r{http://www.srf.ch/player/tv/videoembed\?id=([a-f0-9\-]{36})}
 SWISSTXT_RESULTS_BASE_URL = 'http://www.srf.ch/swisstxt/resultate/fussball/super-league'
 INTEGRATIONLAYER_BASE_URL = 'http://il.srgssr.ch/integrationlayer/1.0/ue/srf/video/play'
 SRF_PLAY_BASE_URL = 'http://www.srf.ch/play/tv/sportaktuell/video/something-or-other'
@@ -45,9 +45,21 @@ def fetch_summary_meta_information(summary_id, score)
   info "Fetching #{integrationlayer_xml_url}"
 
   uri = URI.parse(integrationlayer_xml_url)
-  integrationlayer_xml = Net::HTTP.get(uri)
+  integrationlayer_xml_response = Net::HTTP.get_response(uri)
+  integrationlayer_xml = integrationlayer_xml_response.body
 
-  integrationlayer_document = Ox.load(integrationlayer_xml)
+  if integrationlayer_xml_response.code == '203'
+    begin
+      integrationlayer_document = Ox.load(integrationlayer_xml)
+    rescue Ox::ParseError => e
+      puts e.message
+      puts integrationlayer_xml
+    end
+  else
+    puts 'Error fetching integration layer xml:'
+    p integrationlayer_xml_response
+  end
+
   title = integrationlayer_document.locate('Video/AssetMetadatas/AssetMetadata/title').first.text
   asset_id = integrationlayer_document.locate('Video/AssetSet/Assets/Video/id').first.text
   mark_in = integrationlayer_document.locate('Video/markIn').first.text.to_i / 1000.0
