@@ -21,7 +21,7 @@ def fetch_summary_ids(year, round)
   round_html = "rnd_regular_#{round + ROUND_MIN - 1}.html"
   round_html_url = "#{SWISSTXT_RESULTS_BASE_URL}/#{year}/#{round_html}"
 
-  info "Fetching #{round_html}..."
+  info "Fetching #{round_html_url}"
   uri = URI.parse(round_html_url)
   swisstxt_html = Net::HTTP.get(uri)
 
@@ -62,12 +62,16 @@ def fetch_summary_meta_information(summary_id, score)
   mark_in = integrationlayer_document.locate('Video/markIn').first.text.to_i / 1000.0
   duration = integrationlayer_document.locate('Video/duration').first.text.to_i / 1000.0
 
-  {
+  meta_info = {
     title: "#{title} #{score}",
     asset_id: asset_id,
     mark_in: mark_in,
     duration: duration
   }
+
+  info "Extracted meta info: #{meta_info.inspect}"
+
+  meta_info
 end
 
 def download_asset(asset_id, round_directory)
