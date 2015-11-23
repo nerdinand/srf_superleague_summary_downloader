@@ -7,7 +7,7 @@ require 'active_support'
 require 'active_support/core_ext/string/inflections'
 
 ROUND_MIN = 160
-VIDEOEMBED_HREF_REGEX = %r{http://www.srf.ch/player/tv/videoembed\?id=([a-f0-9\-]{36})}
+URN_REGEX = %r{urn:srf:ais:video:([a-f0-9\-]{36})}
 SWISSTXT_RESULTS_BASE_URL = 'http://www.srf.ch/swisstxt/resultate/fussball/super-league'
 INTEGRATIONLAYER_BASE_URL = 'http://il.srgssr.ch/integrationlayer/1.0/ue/srf/video/play'
 SRF_PLAY_BASE_URL = 'http://www.srf.ch/play/tv/sportaktuell/video/something-or-other'
@@ -29,13 +29,10 @@ def fetch_summary_ids(year, round)
   link_elements = swisstxt_document.locate('table/tbody/tr/td/a')
 
   texts = link_elements.map(&:text)
-  hrefs = link_elements.map(&:href)
-
-  nil_indices = texts.map.with_index { |text, i| i if text == nil }.compact
+  video_urns = link_elements.map(&:attributes).map{ |attributes| attributes[:'data-urn'] }.compact
 
   scores = texts.compact
-  video_hrefs = hrefs.values_at(*nil_indices)
-  ids = video_hrefs.map { |href| href.match VIDEOEMBED_HREF_REGEX }.map{ |match| match[1] }
+  ids = video_urns.map{ |urn| urn.match URN_REGEX }.map{ |match| match[1] }
 
   [ids, scores]
 end
@@ -77,7 +74,6 @@ def download_asset(asset_id, round_directory)
   youtube_dl_command = [
     'youtube-dl',
     "#{SRF_PLAY_BASE_URL}?id=#{asset_id}",
-
     '-o', File.join(round_directory, "#{asset_id}.%(ext)s")
   ]
 
@@ -115,6 +111,8 @@ def download_summaries(year, round)
   end
 
   asset_ids = meta_infos.map { |k, v| v[:asset_id] }
+
+  info "Found #{asset_ids.count} assets to download"
 
   asset_ids.uniq.each do |asset_id|
     download_asset(asset_id, round_directory)
