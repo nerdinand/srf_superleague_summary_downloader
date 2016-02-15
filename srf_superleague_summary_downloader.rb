@@ -11,7 +11,7 @@ URN_REGEX = %r{urn:srf:ais:video:([a-f0-9\-]{36})}
 SWISSTXT_RESULTS_BASE_URL = 'http://www.srf.ch/swisstxt/resultate/fussball/super-league'
 INTEGRATIONLAYER_BASE_URL = 'http://il.srgssr.ch/integrationlayer/1.0/ue/srf/video/play'
 SRF_PLAY_BASE_URL = 'http://www.srf.ch/play/tv/sportaktuell/video/something-or-other'
-EXTENSION = '.flv'
+EXTENSION = '.mp4'
 
 def info(string)
   puts "===> #{string} <==="
@@ -82,7 +82,9 @@ def download_asset(asset_id, round_directory)
   ]
 
   info "Executing #{youtube_dl_command.join ' '}"
-  system *youtube_dl_command
+  success = system *youtube_dl_command
+
+  raise 'Command failed' unless success
 end
 
 def reencode_asset_to_summary(meta_info, round_directory)
@@ -92,6 +94,7 @@ def reencode_asset_to_summary(meta_info, round_directory)
   ffmpeg_command = [
     'ffmpeg',
     '-i', asset_path,
+    '-bsf:a', 'aac_adtstoasc',
     '-ss', meta_info[:mark_in].to_s,
     '-c', 'copy',
     '-t', meta_info[:duration].to_s,
@@ -99,7 +102,9 @@ def reencode_asset_to_summary(meta_info, round_directory)
   ]
 
   info "Executing #{ffmpeg_command.join ' '}"
-  system *ffmpeg_command
+  success = system *ffmpeg_command
+
+  raise 'Command failed' unless success
 end
 
 def download_summaries(year, round)
