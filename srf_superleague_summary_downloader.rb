@@ -1,14 +1,14 @@
 require 'net/http'
-require 'ox'
 require 'byebug'
 require 'fileutils'
+require 'json'
+require 'ox'
 
 require 'active_support'
 require 'active_support/core_ext/string/inflections'
 
 ROUND_MIN = 160
 URN_REGEX = %r{urn:srf:ais:video:([a-f0-9\-]{36})}
-SWISSTXT_RESULTS_BASE_URL = 'http://www.srf.ch/swisstxt/resultate/fussball/super-league'
 INTEGRATIONLAYER_BASE_URL = 'http://il.srgssr.ch/integrationlayer/1.0/ue/srf/video/play'
 SRF_PLAY_BASE_URL = 'http://www.srf.ch/play/tv/sportaktuell/video/something-or-other'
 EXTENSION = '.mp4'
@@ -17,22 +17,20 @@ def info(string)
   puts "===> #{string} <==="
 end
 
+def swisstxt_api_url(round)
+  "http://sport.api.swisstxt.ch/v1/eventItems?phaseIds=2496-171-#{round + ROUND_MIN - 1}&lang=de"
+end
+
 def fetch_summary_ids(year, round)
-  round_html = "rnd_regular_#{round + ROUND_MIN - 1}.html"
-  round_html_url = "#{SWISSTXT_RESULTS_BASE_URL}/#{year}/#{round_html}"
+  round_api_url = swisstxt_api_url(round)
 
-  info "Fetching #{round_html_url}"
-  uri = URI.parse(round_html_url)
-  swisstxt_html = Net::HTTP.get(uri)
+  info "Fetching #{round_api_url}"
+  uri = URI.parse(round_api_url)
+  swisstxt_json = Net::HTTP.get(uri)
+  parsed = JSON.parse(swisstxt_json)
 
-  swisstxt_document = Ox.load(swisstxt_html)
-  link_elements = swisstxt_document.locate('table/tbody/tr/td/a')
-
-  texts = link_elements.map(&:text)
-  video_urns = link_elements.map(&:attributes).map{ |attributes| attributes[:'data-urn'] }.compact
-
-  scores = texts.compact
-  ids = video_urns.map{ |urn| urn.match URN_REGEX }.map{ |match| match[1] }
+  scores = parsed.map { |game| game['scores']['main']['formatted'] }
+  ids = parsed.map { |game| game['videoAssetId'] }
 
   [ids, scores]
 end

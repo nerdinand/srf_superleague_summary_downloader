@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'ox'
-gem 'byebug'
 gem 'activesupport'
+
+gem 'byebug'
+gem 'awesome_print'
