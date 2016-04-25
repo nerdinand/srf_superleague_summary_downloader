@@ -114,6 +114,7 @@ def download_summaries(year, round)
 
   meta_infos = {}
   summary_ids.each_with_index do |summary_id, i|
+    next unless summary_id
     meta_infos[summary_id] = fetch_summary_meta_information(summary_id, scores[i])
   end
 
