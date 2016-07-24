@@ -13,16 +13,21 @@ INTEGRATIONLAYER_BASE_URL = 'http://il.srgssr.ch/integrationlayer/1.0/ue/srf/vid
 SRF_PLAY_BASE_URL = 'http://www.srf.ch/play/tv/sportaktuell/video/something-or-other'
 EXTENSION = '.mp4'
 
+YEAR_PHASE_ID_MAP = {
+  2016 => 2496,
+  2017 => 3195
+}
+
 def info(string)
   puts "===> #{string} <==="
 end
 
-def swisstxt_api_url(round)
-  "http://sport.api.swisstxt.ch/v1/eventItems?phaseIds=2496-171-#{round + ROUND_MIN - 1}&lang=de"
+def swisstxt_api_url(year, round)
+  "http://sport.api.swisstxt.ch/v1/eventItems?phaseIds=#{YEAR_PHASE_ID_MAP[year]}-171-#{round + ROUND_MIN - 1}&lang=de"
 end
 
 def fetch_summary_ids(year, round)
-  round_api_url = swisstxt_api_url(round)
+  round_api_url = swisstxt_api_url(year, round)
 
   info "Fetching #{round_api_url}"
   uri = URI.parse(round_api_url)
@@ -91,6 +96,7 @@ def reencode_asset_to_summary(meta_info, round_directory)
 
   ffmpeg_command = [
     'ffmpeg',
+    '-y', # overwrite without asking
     '-i', asset_path,
     '-bsf:a', 'aac_adtstoasc',
     '-ss', meta_info[:mark_in].to_s,
