@@ -16,6 +16,13 @@ brew install youtube-dl ffmpeg
 
 To run the script, you'll need Ruby too, comes preinstalled on a Mac.
 
+Depending on your Ruby setup you may need to run these commands:
+
+```
+gem install bundler
+bundle install
+```
+
 ## Running the script
 
 Simply run the script with
