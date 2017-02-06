@@ -1,20 +1,19 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (4.2.3)
+    activesupport (5.0.1)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (~> 0.7)
-      json (~> 1.7, >= 1.7.7)
       minitest (~> 5.1)
-      thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
     awesome_print (1.6.1)
     byebug (5.0.0)
       columnize (= 0.9.0)
     columnize (0.9.0)
-    i18n (0.7.0)
-    json (1.8.3)
-    minitest (5.7.0)
-    ox (2.2.1)
+    concurrent-ruby (1.0.4)
+    i18n (0.8.0)
+    minitest (5.10.1)
+    ox (2.4.9)
     thread_safe (0.3.5)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
@@ -23,10 +22,10 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  activesupport
+  activesupport (~> 5.0.1)
   awesome_print
   byebug
-  ox
+  ox (~> 2.4.9)
 
 BUNDLED WITH
-   1.11.2
+   1.14.3
