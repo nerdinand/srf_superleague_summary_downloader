@@ -126,9 +126,10 @@ def download_summaries(year, round)
 
   asset_ids = meta_infos.map { |k, v| v[:asset_id] }
 
+  asset_ids.uniq!
   info "Found #{asset_ids.count} assets to download"
 
-  asset_ids.uniq.each do |asset_id|
+  asset_ids.each do |asset_id|
     download_asset(asset_id, round_directory)
   end
 
