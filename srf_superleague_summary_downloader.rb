@@ -15,7 +15,8 @@ EXTENSION = '.mp4'
 
 YEAR_PHASE_ID_MAP = {
   2016 => 2496,
-  2017 => 3195
+  2017 => 3195,
+  2018 => 3408
 }
 
 def info(string)
@@ -23,7 +24,11 @@ def info(string)
 end
 
 def swisstxt_api_url(year, round)
-  "http://sport.api.swisstxt.ch/v1/eventItems?phaseIds=#{YEAR_PHASE_ID_MAP[year]}-171-#{round + ROUND_MIN - 1}&lang=de"
+  phase_id = YEAR_PHASE_ID_MAP[year]
+
+  raise "No phase id for year #{year}. Look up phase id in AJAX requests on http://www.srf.ch/sport/resultcenter/results#football/super-league" unless phase_id
+
+  "http://sport.api.swisstxt.ch/v1/eventItems?phaseIds=#{phase_id}-171-#{round + ROUND_MIN - 1}&lang=de"
 end
 
 def fetch_summary_ids(year, round)
